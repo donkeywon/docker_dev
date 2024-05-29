@@ -1,0 +1,284 @@
+version: "3"
+services:
+  openresty:
+    container_name: openresty
+    image: openresty/openresty:$OPENRESTY_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    volumes:
+      - ./conf/openresty/conf.d:/etc/nginx/conf.d
+  redis:
+    container_name: redis
+    image: redis:$REDIS_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+    volumes:
+      - redis_data:/data
+  kafka:
+    container_name: kafka
+    image: bitnami/kafka:$KAFKA_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      KAFKA_CFG_NODE_ID: 0
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@localhost:9093
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      JMX_PORT: 9527
+    volumes:
+      - kafka_data:/bitnami/kafka/data
+  mariadb:
+    container_name: mariadb
+    image: mariadb:$MARIADB_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      TZ: Asia/Shanghai
+    volumes:
+      - ./conf/mysql/conf.d/mariadbd.cnf:/etc/mysql/conf.d/mariadbd.cnf
+      - ./conf/mysql/initdb:/docker-entrypoint-initdb.d
+      - mariadb_data:/var/lib/mysql
+      - mariadb_log:/var/log/mysql
+  mysql:
+    container_name: mysql
+    image: mysql:$MYSQL_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      TZ: Asia/Shanghai
+    volumes:
+      - ./conf/mysql/conf.d/mysqld.cnf:/etc/mysql/conf.d/mysqld.cnf
+      - ./conf/mysql/initdb:/docker-entrypoint-initdb.d
+      - mysql_data:/var/lib/mysql
+      - mysql_log:/var/log/mysql
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:$GRAFANA_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      GF_DATABASE_TYPE: sqlite3
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+  es:
+    container_name: es
+    image: elasticsearch:$ES_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      node.name: es
+      cluster.name: docker-es
+      bootstrap.memory_lock: true
+      network.host: 0.0.0.0
+      http.port: 9200
+      discovery.type: single-node
+      node.roles: master,data,remote_cluster_client,ingest
+      transport.compress: true
+      transport.port: 9300
+      xpack.monitoring.collection.enabled: true
+      xpack.monitoring.elasticsearch.collection.enabled: true
+      http.cors.enabled: true
+      http.cors.allow-origin: '"*"'
+      xpack.security.transport.ssl.enabled: false
+      xpack.security.http.ssl.enabled: false
+      xpack.security.enabled: false
+      ES_JAVA_OPTS: -Xms1g -Xmx1g -Xlog:disable
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+  kibana:
+    container_name: kibana
+    image: bitnami/kibana:$KIBANA_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      KIBANA_ELASTICSEARCH_URL: http://localhost:9200
+      KIBANA_ELASTICSEARCH_PORT_NUMBER: 9200
+      KIBANA_NEWSFEED_ENABLED: false
+    volumes:
+      - kibana_data:/bitnami/kibana
+  esvue:
+    container_name: esvue
+    image: cars10/elasticvue:$ELASTICVUE_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    volumes:
+      - ./conf/openresty/esvue.conf:/etc/nginx/nginx.conf
+  zk:
+    container_name: zk
+    image: zookeeper:$ZK_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      ZOO_TICK_TIME: 2000
+      ZOO_INIT_LIMIT: 5
+      ZOO_SYNC_LIMIT: 2
+      ZOO_MAX_CLIENT_CNXNS: 60
+      ZOO_STANDALONE_ENABLED: true
+      ZOO_ADMINSERVER_ENABLED: true
+      ZOO_AUTOPURGE_PURGEINTERVAL: 0
+      ZOO_AUTOPURGE_SNAPRETAINCOUNT: 3
+      ZOO_4LW_COMMANDS_WHITELIST: srvr
+      ZOO_CFG_EXTRA: "admin.serverPort=8082"
+      JVMFLAGS: ""
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=localhost:2888:3888;2181
+    volumes:
+      - zk_data:/data
+      - zk_log:/datalog
+      - zk_log:/logs
+  torna:
+    container_name: torna
+    image: registry.cn-hangzhou.aliyuncs.com/tanghc/torna:$TORNA_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    entrypoint:
+      - sh
+      - -c
+      - "java -Djava.awt.headless=true -Duser.timezone=Asia/Shanghai -Djava.security.egd=file:/dev/./urandom -jar /torna/torna.jar --server.port=7700 --mysql.host=localhost:3306 --mysql-schema=torna --mysql.username=root --mysql.password=root"
+    depends_on:
+      mariadb:
+        required: true
+        condition: service_started
+    volumes:
+      - torna_tmp:/tmp
+  httpbin:
+    container_name: httpbin
+    image: mccutchen/go-httpbin:$HTTPBIN_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      PORT: 8085
+  apollo:
+    container_name: apollo-portal
+    image: apolloconfig/apollo-portal:$APOLLO_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    depends_on:
+      apollo-config:
+        required: true
+        condition: service_started
+      apollo-admin:
+        required: true
+        condition: service_started
+      mariadb:
+        required: true
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/ApolloPortalDB?characterEncoding=utf8
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      APOLLO_PORTAL_ENVS: dev
+      DEV_META: http://localhost:8080
+  apollo-config:
+    container_name: apollo-config
+    image: apolloconfig/apollo-configservice:$APOLLO_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/ApolloConfigDB?characterEncoding=utf8
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+  apollo-admin:
+    container_name: apollo-admin
+    image: apolloconfig/apollo-adminservice:$APOLLO_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/ApolloConfigDB?characterEncoding=utf8
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+  rustdesk-server:
+    container_name: rustdesk-server
+    image: rustdesk/rustdesk-server-s6:latest
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      RELAY: 127.0.0.1:21116
+      ENCRYPTED_ONLY: 1
+      DB_URL: /data/db_v2.sqlite3
+      KEY_PUB: ""
+      KEY_PRIV: ""
+    volumes:
+      - rustdesk_data:/data
+  clickhouse:
+    container_name: clickhouse
+    image: bitnami/clickhouse:$CLICKHOUSE_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      CLICKHOUSE_ADMIN_USER: admin
+      CLICKHOUSE_ADMIN_PASSWORD: admin
+    volumes:
+      - clickhouse_data:/bitnami/clickhouse
+      - clickhouse_log:/opt/bitnami/clickhouse/logs
+  dubbo-admin:
+    container_name: dubbo-admin
+    image: apache/dubbo-admin:$DUBBO_ADMIN_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    depends_on:
+      zk:
+        required: true
+        condition: service_started
+    environment:
+      admin.registry.address: zookeeper://localhost:2181
+      admin.config-center: zookeeper://localhost:2181
+      admin.metadata-report.address: zookeeper://localhost:2181
+  vm:
+    container_name: vm
+    image: victoriametrics/victoria-metrics:$VICTORIA_METRICS_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    volumes:
+      - vm_data:/victoria-metrics-data
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:$KAFKA_UI_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      DYNAMIC_CONFIG_ENABLED: true
+      SERVER_PORT: 8081
+  dfly:
+    container_name: dfly
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:$DRAGONFLYDB_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      DFLY_port: 6378
+    volumes:
+      - dfly_data:/data
+
+volumes:
+  es_data: {}
+  redis_data: {}
+  kafka_data: {}
+  mysql_data: {}
+  mysql_log: {}
+  grafana_data: {}
+  zk_data: {}
+  zk_log: {}
+  rustdesk_data: {}
+  mariadb_data: {}
+  mariadb_log: {}
+  clickhouse_data: {}
+  clickhouse_log: {}
+  vm_data: {}
+  dfly_data: {}
+  kibana_data: {}
+  torna_tmp: {}
