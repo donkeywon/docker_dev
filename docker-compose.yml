@@ -263,6 +263,19 @@ services:
       DFLY_port: 6378
     volumes:
       - dfly_data:/data
+  minio:
+    container_name: minio
+    image: bitnami/minio:$MINIO_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      MINIO_API_PORT_NUMBER: 9000
+      MINIO_CONSOLE_PORT_NUMBER: 9001
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/bitnami/minio/data
+      - minio_cert:/certs
 
 volumes:
   es_data: {}
@@ -282,3 +295,5 @@ volumes:
   dfly_data: {}
   kibana_data: {}
   torna_tmp: {}
+  minio_data: {}
+  minio_cert: {}
