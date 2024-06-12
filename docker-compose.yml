@@ -276,6 +276,26 @@ services:
     volumes:
       - minio_data:/bitnami/minio/data
       - minio_cert:/certs
+  searxng:
+    container_name: searxng
+    image: searxng/searxng:$SEARXNG_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      BIND_ADDRESS: "127.0.0.1:8888"
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "1"
+    volumes:
+      - ./conf/searxng:/etc/searxng:rw
 
 volumes:
   es_data: {}
