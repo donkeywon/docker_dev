@@ -6,6 +6,7 @@ services:
     hostname: $HOSTNAME
     volumes:
       - ./conf/openresty/conf.d:/etc/nginx/conf.d
+      - /tmp:/tmp
   redis:
     container_name: redis
     image: redis:$REDIS_VERSION
