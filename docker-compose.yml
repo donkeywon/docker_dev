@@ -283,6 +283,13 @@ services:
     volumes:
       - minio_data:/bitnami/minio/data
       - minio_cert:/certs
+  nacos:
+    container_name: nacos
+    image: nacos/nacos-server:$NACOS_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      MODE: standalone
 
 volumes:
   es_data: {}
