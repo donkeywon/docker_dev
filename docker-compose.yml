@@ -290,6 +290,13 @@ services:
     hostname: $HOSTNAME
     environment:
       MODE: standalone
+  influxdb:
+    container_name: influxdb
+    image: influxdb:$INFLUXDB_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    volumes:
+      - influxdb_data:/var/lib/influxdb
 
 volumes:
   es_data: {}
@@ -311,3 +318,4 @@ volumes:
   torna_tmp: {}
   minio_data: {}
   minio_cert: {}
+  influxdb_data: {}
