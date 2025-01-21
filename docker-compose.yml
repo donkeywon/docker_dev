@@ -297,6 +297,14 @@ services:
     hostname: $HOSTNAME
     volumes:
       - influxdb_data:/var/lib/influxdb
+  busybox:
+    container_name: busybox
+    image: busybox:$BUSYBOX_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    command:
+      - sleep
+      - infinity
 
 volumes:
   es_data: {}
