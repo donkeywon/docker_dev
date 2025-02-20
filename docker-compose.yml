@@ -32,12 +32,13 @@ services:
       KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_CFG_INTER_BROKER_LISTENER_NAME: CLIENT
       KAFKA_CFG_LISTENERS: CLIENT://:9092,CONTROLLER://:9093
-      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,CLIENT:SASL_PLAINTEXT
       KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@localhost:9093
-      KAFKA_CFG_SASL_MECHANISM_INTER_BROKER_PROTOCOL: SCRAM-SHA-512
-      KAFKA_CFG_SASL_ENABLED_MECHANISMS: SCRAM-SHA-512
-      KAFKA_CLIENT_USERS: root
-      KAFKA_CLIENT_PASSWORDS: root
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,CLIENT:PLAINTEXT
+      #KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,CLIENT:SASL_PLAINTEXT
+      #KAFKA_CFG_SASL_MECHANISM_INTER_BROKER_PROTOCOL: SCRAM-SHA-512
+      #KAFKA_CFG_SASL_ENABLED_MECHANISMS: SCRAM-SHA-512
+      #KAFKA_CLIENT_USERS: root
+      #KAFKA_CLIENT_PASSWORDS: $PASSWORD
       JMX_PORT: 9527
     volumes:
       - kafka_data:/bitnami/kafka/data
@@ -47,7 +48,7 @@ services:
     network_mode: host
     hostname: $HOSTNAME
     environment:
-      MARIADB_ROOT_PASSWORD: root
+      MARIADB_ROOT_PASSWORD: $PASSWORD
       TZ: Asia/Shanghai
     volumes:
       - ./conf/mysql/conf.d/mariadbd.cnf:/etc/mysql/conf.d/mariadbd.cnf
@@ -60,7 +61,7 @@ services:
     network_mode: host
     hostname: $HOSTNAME
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: $PASSWORD
       TZ: Asia/Shanghai
     volumes:
       - ./conf/mysql/conf.d/mysqld.cnf:/etc/mysql/conf.d/mysqld.cnf
@@ -75,7 +76,7 @@ services:
     environment:
       GF_DATABASE_TYPE: sqlite3
       GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SECURITY_ADMIN_PASSWORD: $PASSWORD
     volumes:
       - grafana_data:/var/lib/grafana
   es:
@@ -156,11 +157,15 @@ services:
     entrypoint:
       - sh
       - -c
-      - "java -Djava.awt.headless=true -Duser.timezone=Asia/Shanghai -Djava.security.egd=file:/dev/./urandom -jar /torna/torna.jar --server.port=7700 --mysql.host=localhost:3306 --mysql-schema=torna --mysql.username=root --mysql.password=root"
+      - "java -server -Xmx512m -Xms512m -Djava.awt.headless=true -Duser.timezone=Asia/Shanghai -Djava.security.egd=file:/dev/./urandom -jar /torna/torna.jar --server.port=7700 --mysql.host=localhost:3306 --mysql-schema=torna --mysql.username=root --mysql.password='$PASSWORD'"
     depends_on:
       mariadb:
         required: true
         condition: service_started
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
     volumes:
       - torna_tmp:/tmp
   httpbin:
@@ -188,7 +193,7 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/ApolloPortalDB?characterEncoding=utf8
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_DATASOURCE_PASSWORD: "$PASSWORD"
       APOLLO_PORTAL_ENVS: dev
       DEV_META: http://localhost:8080
   apollo-config:
@@ -199,7 +204,7 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/ApolloConfigDB?characterEncoding=utf8
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_DATASOURCE_PASSWORD: "$PASSWORD"
   apollo-admin:
     container_name: apollo-admin
     image: apolloconfig/apollo-adminservice:$APOLLO_VERSION
@@ -208,7 +213,7 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/ApolloConfigDB?characterEncoding=utf8
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_DATASOURCE_PASSWORD: "$PASSWORD"
   rustdesk-server:
     container_name: rustdesk-server
     image: rustdesk/rustdesk-server-s6:latest
@@ -229,7 +234,7 @@ services:
     hostname: $HOSTNAME
     environment:
       CLICKHOUSE_ADMIN_USER: admin
-      CLICKHOUSE_ADMIN_PASSWORD: admin
+      CLICKHOUSE_ADMIN_PASSWORD: $PASSWORD
     volumes:
       - clickhouse_data:/bitnami/clickhouse
       - clickhouse_log:/opt/bitnami/clickhouse/logs
@@ -278,8 +283,8 @@ services:
     environment:
       MINIO_API_PORT_NUMBER: 9100
       MINIO_CONSOLE_PORT_NUMBER: 9101
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: $PASSWORD
     volumes:
       - minio_data:/bitnami/minio/data
       - minio_cert:/certs
@@ -305,6 +310,31 @@ services:
     command:
       - sleep
       - infinity
+  metersphere:
+    container_name: metersphere
+    image: metersphere/metersphere-ce-allinone:$METERSPHERE_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      PASSWORD: $PASSWORD
+    depends_on:
+      mariadb:
+        required: true
+        condition: service_started
+      redis:
+        required: true
+        condition: service_started
+      kafka:
+        required: true
+        condition: service_started
+      minio:
+        required: true
+        condition: service_started
+    volumes:
+      - metersphere_data:/opt/metersphere/data
+      - ./conf/metersphere:/opt/metersphere/conf
+      - metersphere_logs:/opt/metersphere/logs
+      - ./conf/metersphere/start-all.sh:/shells/start-all.sh
 
 volumes:
   es_data: {}
@@ -327,3 +357,5 @@ volumes:
   minio_data: {}
   minio_cert: {}
   influxdb_data: {}
+  metersphere_data: {}
+  metersphere_logs: {}
