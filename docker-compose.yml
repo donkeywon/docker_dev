@@ -335,6 +335,15 @@ services:
       - ./conf/metersphere:/opt/metersphere/conf
       - metersphere_logs:/opt/metersphere/logs
       - ./conf/metersphere/start-all.sh:/shells/start-all.sh
+  tdengine:
+    container_name: tdengine
+    image: tdengine/tdengine:$TDENGINE_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    volumes:
+      - tdengine_data:/var/lib/taos
+      - tdengine_log:/var/log/taos
+      - tdengine_core:/corefile
 
 volumes:
   es_data: {}
@@ -359,3 +368,6 @@ volumes:
   influxdb_data: {}
   metersphere_data: {}
   metersphere_logs: {}
+  tdengine_data: {}
+  tdengine_log: {}
+  tdengine_core: {}
