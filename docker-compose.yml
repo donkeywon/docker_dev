@@ -344,6 +344,29 @@ services:
       - tdengine_data:/var/lib/taos
       - tdengine_log:/var/log/taos
       - tdengine_core:/corefile
+  ftp:
+    container_name: ftp
+    image: drakkan/sftpgo:$SFTPGO_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      SFTPGO_FTPD__BINDINGS__0__PORT: 8021
+      SFTPGO_HTTPD__BINDINGS__0__PORT: 8086
+    volumes:
+      - sftpgo_home:/var/lib/sftpgo
+      - sftpgo_data:/srv/sftpgo
+  sshd:
+    container_name: sshd
+    image: testcontainers/sshd:$SSHD_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      USERNAME: root
+      PASSWORD: $PASSWORD
+    entrypoint: sh
+    command:
+      - -c
+      - echo $${USERNAME}:$${PASSWORD} | chpasswd && /usr/sbin/sshd -D -p 8022 -o PermitRootLogin=yes -o AddressFamily=inet -o GatewayPorts=yes -o AllowAgentForwarding=yes -o AllowTcpForwarding=yes -o KexAlgorithms=+diffie-hellman-group1-sha1 -o HostkeyAlgorithms=+ssh-rsa
 
 volumes:
   es_data: {}
@@ -371,3 +394,5 @@ volumes:
   tdengine_data: {}
   tdengine_log: {}
   tdengine_core: {}
+  sftpgo_data: {}
+  sftpgo_home: {}
