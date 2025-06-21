@@ -344,7 +344,7 @@ services:
     hostname: $HOSTNAME
     environment:
       SFTPGO_FTPD__BINDINGS__0__PORT: 8021
-      SFTPGO_HTTPD__BINDINGS__0__PORT: 8086
+      SFTPGO_HTTPD__BINDINGS__0__PORT: 8089
     volumes:
       - sftpgo_home:/var/lib/sftpgo
       - sftpgo_data:/srv/sftpgo
