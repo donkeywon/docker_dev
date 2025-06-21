@@ -251,13 +251,6 @@ services:
       admin.registry.address: zookeeper://localhost:2181
       admin.config-center: zookeeper://localhost:2181
       admin.metadata-report.address: zookeeper://localhost:2181
-  vm:
-    container_name: vm
-    image: victoriametrics/victoria-metrics:$VICTORIA_METRICS_VERSION
-    network_mode: host
-    hostname: $HOSTNAME
-    volumes:
-      - vm_data:/victoria-metrics-data
   kafka-ui:
     container_name: kafka-ui
     image: kafbat/kafka-ui:$KAFKA_UI_VERSION
@@ -382,7 +375,6 @@ volumes:
   mariadb_log: {}
   clickhouse_data: {}
   clickhouse_log: {}
-  vm_data: {}
   dfly_data: {}
   kibana_data: {}
   torna_tmp: {}
