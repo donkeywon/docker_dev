@@ -683,7 +683,6 @@ CREATE TABLE `user_info` (
                              `is_super_admin` tinyint(4) NOT NULL DEFAULT '0' COMMENT '是否是超级管理员',
                              `source` varchar(64) NOT NULL DEFAULT 'register',
                              `email` varchar(128) NOT NULL DEFAULT '',
-                             `mfa_sk` varchar(128) NOT NULL DEFAULT '' COMMENT '多因素认证密钥',
                              `status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '0：禁用，1：启用，2：重设密码',
                              `is_deleted` tinyint(4) NOT NULL DEFAULT '0',
                              `gmt_create` datetime DEFAULT CURRENT_TIMESTAMP,
@@ -691,6 +690,8 @@ CREATE TABLE `user_info` (
                              PRIMARY KEY (`id`) USING BTREE,
                              UNIQUE KEY `uk_username` (`username`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC COMMENT='用户表';
+
+ALTER TABLE `user_info` ADD COLUMN `mfa_sk` varchar(128) NOT NULL DEFAULT '' COMMENT '多因素认证密钥';
 
 DROP TABLE IF EXISTS `user_message`;
 CREATE TABLE `user_message` (
