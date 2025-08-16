@@ -278,6 +278,7 @@ services:
       MINIO_CONSOLE_PORT_NUMBER: 9101
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: $PASSWORD
+      MINIO_SKIP_CLIENT: yes
     volumes:
       - minio_data:/bitnami/minio/data
       - minio_cert:/certs
@@ -360,6 +361,11 @@ services:
     command:
       - -c
       - echo $${USERNAME}:$${PASSWORD} | chpasswd && /usr/sbin/sshd -D -p 8022 -o PermitRootLogin=yes -o AddressFamily=inet -o GatewayPorts=yes -o AllowAgentForwarding=yes -o AllowTcpForwarding=yes -o KexAlgorithms=+diffie-hellman-group1-sha1 -o HostkeyAlgorithms=+ssh-rsa
+  redis-insight:
+    container_name: redis-insight
+    image: redis/redisinsight:$REDIS_INSIGHT_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
 
 volumes:
   es_data: {}
