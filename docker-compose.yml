@@ -366,6 +366,91 @@ services:
     image: redis/redisinsight:$REDIS_INSIGHT_VERSION
     network_mode: host
     hostname: $HOSTNAME
+  nats:
+    container_name: nats
+    image: nats:$NATS_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    command:
+      - -p
+      - "4222"
+      - -m
+      - "4333"
+      - -js
+      - -sd
+      - /var/lib/nats
+      - --user
+      - root
+      - --pass
+      - $PASSWORD
+      - --cluster_name
+      - local
+    volumes:
+      - nats_data:/var/lib/nats
+  nats-ui:
+    container_name: nats-ui
+    image: ghcr.io/nats-nui/nui:latest
+    network_mode: host
+    hostname: $HOSTNAME
+    volumes:
+      - nats_ui_data:/db
+  redpanda:
+    container_name: redpanda
+    image: redpandadata/redpanda:$REDPANDA_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    command:
+      - redpanda
+      - start
+      - --kafka-addr internal://0.0.0.0:9192,external://0.0.0.0:19192
+      # Address the broker advertises to clients that connect to the Kafka API.
+      # Use the internal addresses to connect to the Redpanda brokers'
+      # from inside the same Docker network.
+      # Use the external addresses to connect to the Redpanda brokers'
+      # from outside the Docker network.
+      - --advertise-kafka-addr internal://localhost:9192,external://localhost:19192
+      - --pandaproxy-addr internal://0.0.0.0:8182,external://0.0.0.0:18182
+      # Address the broker advertises to clients that connect to the HTTP Proxy.
+      - --advertise-pandaproxy-addr internal://localhost:8182,external://localhost:18182
+      - --schema-registry-addr internal://0.0.0.0:8181,external://0.0.0.0:18181
+      # Redpanda brokers use the RPC API to communicate with each other internally.
+      - --rpc-addr localhost:33145
+      - --advertise-rpc-addr localhost:33145
+      # Mode dev-container uses well-known configuration properties for development in containers.
+      - --mode dev-container
+      # Tells Seastar (the framework Redpanda uses under the hood) to use 1 core on the system.
+      - --smp 1
+      - --default-log-level=info
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+  redpanda-console:
+    container_name: redpanda-console
+    image: redpandadata/console:$REDPANDA_CONSOLE_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    entrypoint: /bin/sh
+    command: -c 'echo "$$CONSOLE_CONFIG_FILE" > /tmp/config.yml; /app/console'
+    environment:
+      CONFIG_FILEPATH: /tmp/config.yml
+      CONSOLE_CONFIG_FILE: |
+        server:
+          listenPort: 8280
+        kafka:
+          brokers: ["localhost:9192"]
+        schemaRegistry:
+          enabled: true
+          urls: ["http://localhost:8181"]
+        redpanda:
+          adminApi:
+            enabled: true
+            urls: ["http://localhost:9644"]
+        analytics:
+          enabled: false
+    depends_on:
+      redpanda:
+        required: true
+        condition: service_started
+
 
 volumes:
   es_data: {}
@@ -394,3 +479,6 @@ volumes:
   tdengine_core: {}
   sftpgo_data: {}
   sftpgo_home: {}
+  nats_data: {}
+  nats_ui_data: {}
+  redpanda_data: {}
