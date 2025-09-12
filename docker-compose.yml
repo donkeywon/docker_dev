@@ -450,7 +450,34 @@ services:
       redpanda:
         required: true
         condition: service_started
-
+  pogocache:
+    container_name: pogocache
+    image: pogocache/pogocache:$POGOCACHE_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+  dockge:
+    container_name: dockge
+    image: louislam/dockge:$DOCKGE_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      DOCKGE_STACKS_DIR: /opt/stacks
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/opt/stacks/docker_dev
+      - dockge_data:/app/data
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce:$PORTAINER_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    entrypoint: sh
+    command:
+      - -c
+      - echo $PASSWORD > /tmp/portainer_password; /portainer --http-enabled --admin-password-file /tmp/portainer_password
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
 
 volumes:
   es_data: {}
@@ -482,3 +509,5 @@ volumes:
   nats_data: {}
   nats_ui_data: {}
   redpanda_data: {}
+  dockge_data: {}
+  portainer_data: {}
