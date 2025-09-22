@@ -478,6 +478,49 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
+  rocketmq-namesrv:
+    container_name: rmqnamesrv
+    image: apache/rocketmq:$ROCKETMQ_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      TZ: Asia/Shanghai
+    command:
+      - nameserver
+  rocketmq:
+    container_name: rmqbroker
+    image: apache/rocketmq:$ROCKETMQ_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    user: root
+    environment:
+      TZ: Asia/Shanghai
+      NAMESRV_ADDR: 127.0.0.1:9876
+      HEAP_OPTS: -Xms256m -Xmx1g -Xmn1g -XX:MaxDirectMemorySize=1g
+    command:
+      - broker
+    depends_on:
+      - rocketmq-namesrv
+    volumes:
+      - rocketmq_data:/home/rocketmq/store
+      - rocketmq_log:/home/rocketmq/logs/rocketmqlogs
+  rocketmq-dashboard:
+    container_name: rmqdashboard
+    image: apacherocketmq/rocketmq-dashboard:$ROCKETMQ_DASHBOARD_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    depends_on:
+      - rocketmq-namesrv
+      - rocketmq
+    entrypoint:
+      - sh
+      - -c
+      - mkdir -p /tmp/rocketmq-console/data; echo "admin=$PASSWORD,1" > /tmp/rocketmq-console/data/users.properties; java $$JAVA_OPTS -jar /rocketmq-dashboard.jar
+    environment:
+      TZ: Asia/Shanghai
+      JAVA_OPTS: -Drocketmq.config.namesrvAddrs=127.0.0.1:9876 -Dserver.port=8090
+    volumes:
+      - rocketmq_dashboard_data:/tmp
 
 volumes:
   es_data: {}
@@ -511,3 +554,6 @@ volumes:
   redpanda_data: {}
   dockge_data: {}
   portainer_data: {}
+  rocketmq_data: {}
+  rocketmq_log: {}
+  rocketmq_dashboard_data: {}
