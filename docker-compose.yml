@@ -21,27 +21,26 @@ services:
       - redis_data:/data
   kafka:
     container_name: kafka
-    image: bitnami/kafka:$KAFKA_VERSION
+    image: apache/kafka:$KAFKA_VERSION
     network_mode: host
     hostname: $HOSTNAME
     environment:
-      ALLOW_PLAINTEXT_LISTENER: yes
-      KAFKA_CFG_NODE_ID: 0
-      KAFKA_CFG_PROCESS_ROLES: controller,broker
-      KAFKA_CLIENT_LISTENER_NAME: CLIENT
-      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: CLIENT
-      KAFKA_CFG_LISTENERS: CLIENT://:9092,CONTROLLER://:9093
-      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@localhost:9093
-      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,CLIENT:PLAINTEXT
-      #KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,CLIENT:SASL_PLAINTEXT
-      #KAFKA_CFG_SASL_MECHANISM_INTER_BROKER_PROTOCOL: SCRAM-SHA-512
-      #KAFKA_CFG_SASL_ENABLED_MECHANISMS: SCRAM-SHA-512
-      #KAFKA_CLIENT_USERS: root
-      #KAFKA_CLIENT_PASSWORDS: $PASSWORD
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       JMX_PORT: 9527
     volumes:
-      - kafka_data:/bitnami/kafka/data
+      - kafka_data:/var/lib/kafka/data
+      - kafka_secret:/etc/kafka/secrets
+      - kafka_config:/mnt/shared/config
   mariadb:
     container_name: mariadb
     image: mariadb:$MARIADB_VERSION
@@ -110,15 +109,15 @@ services:
       - es_data:/usr/share/elasticsearch/data
   kibana:
     container_name: kibana
-    image: bitnami/kibana:$KIBANA_VERSION
+    image: kibana:$KIBANA_VERSION
     network_mode: host
     hostname: $HOSTNAME
     environment:
-      KIBANA_ELASTICSEARCH_URL: http://localhost:9200
-      KIBANA_ELASTICSEARCH_PORT_NUMBER: 9200
-      KIBANA_NEWSFEED_ENABLED: false
+      ELASTICSEARCH_HOSTS: http://localhost:9200
+      NEWSFEED_ENABLED: false
+      TELEMETRY_OPTIN: false
     volumes:
-      - kibana_data:/bitnami/kibana
+      - kibana_data:/usr/share/kibana/data
   esvue:
     container_name: esvue
     image: cars10/elasticvue:$ELASTICVUE_VERSION
@@ -227,17 +226,6 @@ services:
       KEY_PRIV: ""
     volumes:
       - rustdesk_data:/data
-  clickhouse:
-    container_name: clickhouse
-    image: bitnami/clickhouse:$CLICKHOUSE_VERSION
-    network_mode: host
-    hostname: $HOSTNAME
-    environment:
-      CLICKHOUSE_ADMIN_USER: admin
-      CLICKHOUSE_ADMIN_PASSWORD: $PASSWORD
-    volumes:
-      - clickhouse_data:/bitnami/clickhouse
-      - clickhouse_log:/opt/bitnami/clickhouse/logs
   dubbo-admin:
     container_name: dubbo-admin
     image: apache/dubbo-admin:$DUBBO_ADMIN_VERSION
@@ -259,29 +247,22 @@ services:
     environment:
       DYNAMIC_CONFIG_ENABLED: true
       SERVER_PORT: 8081
-  dfly:
-    container_name: dfly
-    image: docker.dragonflydb.io/dragonflydb/dragonfly:$DRAGONFLYDB_VERSION
-    network_mode: host
-    hostname: $HOSTNAME
-    environment:
-      DFLY_port: 6378
-    volumes:
-      - dfly_data:/data
   minio:
     container_name: minio
-    image: bitnami/minio:$MINIO_VERSION
+    image: minio/minio:$MINIO_VERSION
     network_mode: host
     hostname: $HOSTNAME
+    command:
+      - minio
+      - server
+      - /data
     environment:
-      MINIO_API_PORT_NUMBER: 9100
-      MINIO_CONSOLE_PORT_NUMBER: 9101
+      MINIO_ADDRESS: ":9100"
+      MINIO_CONSOLE_ADDRESS: ":9101"
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: $PASSWORD
-      MINIO_SKIP_CLIENT: yes
     volumes:
-      - minio_data:/bitnami/minio/data
-      - minio_cert:/certs
+      - minio_data:/data
   nacos:
     container_name: nacos
     image: nacos/nacos-server:$NACOS_VERSION
@@ -521,11 +502,29 @@ services:
       JAVA_OPTS: -Drocketmq.config.namesrvAddrs=127.0.0.1:9876 -Dserver.port=8090
     volumes:
       - rocketmq_dashboard_data:/tmp
+  rustfs:
+    container_name: rustfs
+    image: rustfs/rustfs:$RUSTFS_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      RUSTFS_ADDRESS: 0.0.0.0:9110
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9111
+      RUSTFS_CONSOLE_ENABLE: true
+      RUSTFS_ACCESS_KEY: admin
+      RUSTFS_SECRET_KEY: $PASSWORD
+      RUSTFS_CORS_ALLOWED_ORIGINS: "*"
+      RUSTFS_CONSOLE_CORS_ALLOWED_ORIGINS: "*"
+    volumes:
+      - rustfs_data:/data
+      - rustfs_log:/logs
 
 volumes:
   es_data: {}
   redis_data: {}
   kafka_data: {}
+  kafka_config: {}
+  kafka_secret: {}
   mysql_data: {}
   mysql_log: {}
   grafana_data: {}
@@ -534,9 +533,6 @@ volumes:
   rustdesk_data: {}
   mariadb_data: {}
   mariadb_log: {}
-  clickhouse_data: {}
-  clickhouse_log: {}
-  dfly_data: {}
   kibana_data: {}
   torna_tmp: {}
   minio_data: {}
@@ -557,3 +553,5 @@ volumes:
   rocketmq_data: {}
   rocketmq_log: {}
   rocketmq_dashboard_data: {}
+  rustfs_data: {}
+  rustfs_log: {}
