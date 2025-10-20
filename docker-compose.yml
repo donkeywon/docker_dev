@@ -312,7 +312,7 @@ services:
       - ./conf/metersphere/start-all.sh:/shells/start-all.sh
   tdengine:
     container_name: tdengine
-    image: tdengine/tdengine:$TDENGINE_VERSION
+    image: tdengine/tsdb:$TDENGINE_VERSION
     network_mode: host
     hostname: $HOSTNAME
     volumes:
