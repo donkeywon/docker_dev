@@ -476,7 +476,7 @@ services:
       - mkdir -p /tmp/rocketmq-console/data; echo "admin=$PASSWORD,1" > /tmp/rocketmq-console/data/users.properties; java $$JAVA_OPTS -jar /rocketmq-dashboard.jar
     environment:
       TZ: Asia/Shanghai
-      JAVA_OPTS: -Drocketmq.config.namesrvAddrs=127.0.0.1:9876 -Dserver.port=8090
+      JAVA_OPTS: -Drocketmq.config.namesrvAddrs=127.0.0.1:9876 -Dserver.port=8190
     volumes:
       - rocketmq_dashboard_data:/tmp
   rustfs:
