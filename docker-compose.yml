@@ -525,8 +525,6 @@ volumes:
   nats_data: {}
   nats_ui_data: {}
   redpanda_data: {}
-  dockge_data: {}
-  portainer_data: {}
   rocketmq_data: {}
   rocketmq_log: {}
   rocketmq_dashboard_data: {}
