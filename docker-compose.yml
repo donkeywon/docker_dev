@@ -67,6 +67,19 @@ services:
       - ./conf/mysql/initdb:/docker-entrypoint-initdb.d
       - mysql_data:/var/lib/mysql
       - mysql_log:/var/log/mysql
+  mysql8:
+    container_name: mysql8
+    image: mysql:$MYSQL8_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      MYSQL_ROOT_PASSWORD: $PASSWORD
+      TZ: Asia/Shanghai
+    volumes:
+      - ./conf/mysql/conf.d/mysqld8.cnf:/etc/mysql/conf.d/mysqld.cnf
+      - ./conf/mysql/initdb:/docker-entrypoint-initdb.d
+      - mysql8_data:/var/lib/mysql
+      - mysql8_log:/var/log/mysql
   grafana:
     container_name: grafana
     image: grafana/grafana:$GRAFANA_VERSION
@@ -504,6 +517,8 @@ volumes:
   kafka_secret: {}
   mysql_data: {}
   mysql_log: {}
+  mysql8_data: {}
+  mysql8_log: {}
   grafana_data: {}
   zk_data: {}
   zk_log: {}
