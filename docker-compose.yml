@@ -99,20 +99,20 @@ services:
     environment:
       node.name: es
       cluster.name: docker-es
-      bootstrap.memory_lock: true
+      bootstrap.memory_lock: "true"
       network.host: 0.0.0.0
       http.port: 9200
       discovery.type: single-node
       node.roles: master,data,remote_cluster_client,ingest
-      transport.compress: true
+      transport.compress: "true"
       transport.port: 9300
-      xpack.monitoring.collection.enabled: true
-      xpack.monitoring.elasticsearch.collection.enabled: true
-      http.cors.enabled: true
+      xpack.monitoring.collection.enabled: "true"
+      xpack.monitoring.elasticsearch.collection.enabled: "true"
+      http.cors.enabled: "true"
       http.cors.allow-origin: '"*"'
-      xpack.security.transport.ssl.enabled: false
-      xpack.security.http.ssl.enabled: false
-      xpack.security.enabled: false
+      xpack.security.transport.ssl.enabled: "false"
+      xpack.security.http.ssl.enabled: "false"
+      xpack.security.enabled: "false"
       ES_JAVA_OPTS: -Xms1g -Xmx1g -Xlog:disable
     ulimits:
       memlock:
@@ -127,8 +127,8 @@ services:
     hostname: $HOSTNAME
     environment:
       ELASTICSEARCH_HOSTS: http://localhost:9200
-      NEWSFEED_ENABLED: false
-      TELEMETRY_OPTIN: false
+      NEWSFEED_ENABLED: "false"
+      TELEMETRY_OPTIN: "false"
     volumes:
       - kibana_data:/usr/share/kibana/data
   esvue:
@@ -148,8 +148,8 @@ services:
       ZOO_INIT_LIMIT: 5
       ZOO_SYNC_LIMIT: 2
       ZOO_MAX_CLIENT_CNXNS: 60
-      ZOO_STANDALONE_ENABLED: true
-      ZOO_ADMINSERVER_ENABLED: true
+      ZOO_STANDALONE_ENABLED: "true"
+      ZOO_ADMINSERVER_ENABLED: "true"
       ZOO_AUTOPURGE_PURGEINTERVAL: 0
       ZOO_AUTOPURGE_SNAPRETAINCOUNT: 3
       ZOO_4LW_COMMANDS_WHITELIST: srvr
@@ -258,7 +258,7 @@ services:
     network_mode: host
     hostname: $HOSTNAME
     environment:
-      DYNAMIC_CONFIG_ENABLED: true
+      DYNAMIC_CONFIG_ENABLED: "true"
       SERVER_PORT: 8081
   minio:
     container_name: minio
@@ -500,7 +500,7 @@ services:
     environment:
       RUSTFS_ADDRESS: 0.0.0.0:9110
       RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9111
-      RUSTFS_CONSOLE_ENABLE: true
+      RUSTFS_CONSOLE_ENABLE: "true"
       RUSTFS_ACCESS_KEY: admin
       RUSTFS_SECRET_KEY: $PASSWORD
       RUSTFS_CORS_ALLOWED_ORIGINS: "*"
