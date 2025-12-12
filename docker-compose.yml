@@ -260,22 +260,6 @@ services:
     environment:
       DYNAMIC_CONFIG_ENABLED: "true"
       SERVER_PORT: 8081
-  minio:
-    container_name: minio
-    image: minio/minio:$MINIO_VERSION
-    network_mode: host
-    hostname: $HOSTNAME
-    command:
-      - minio
-      - server
-      - /data
-    environment:
-      MINIO_ADDRESS: ":9100"
-      MINIO_CONSOLE_ADDRESS: ":9101"
-      MINIO_ROOT_USER: admin
-      MINIO_ROOT_PASSWORD: $PASSWORD
-    volumes:
-      - minio_data:/data
   nacos:
     container_name: nacos
     image: nacos/nacos-server:$NACOS_VERSION
@@ -315,7 +299,7 @@ services:
       kafka:
         required: true
         condition: service_started
-      minio:
+      rustfs:
         required: true
         condition: service_started
     volumes:
@@ -527,8 +511,6 @@ volumes:
   mariadb_log: {}
   kibana_data: {}
   torna_tmp: {}
-  minio_data: {}
-  minio_cert: {}
   influxdb_data: {}
   metersphere_data: {}
   metersphere_logs: {}
