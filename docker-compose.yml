@@ -492,6 +492,27 @@ services:
     volumes:
       - rustfs_data:/data
       - rustfs_log:/logs
+  it-tools:
+    container_name: it-tools
+    image: corentinth/it-tools:latest
+    network_mode: host
+    hostname: $HOSTNAME
+    environment:
+      NGINX_CONF: |
+        server {
+            listen 8380;
+            server_name localhost;
+            root /usr/share/nginx/html;
+            index index.html;
+
+            location / {
+                try_files $$uri $$uri/ /index.html;
+            }
+        }
+    entrypoint: sh
+    command:
+      - -c
+      - /docker-entrypoint.sh; echo "$$NGINX_CONF" > /etc/nginx/conf.d/default.conf; nginx -g "daemon off;"
 
 volumes:
   es_data: {}
