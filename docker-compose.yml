@@ -542,6 +542,13 @@ services:
     command:
       - -c
       - echo "$$NGINX_CONF" > /etc/nginx/nginx.conf; nginx -g "daemon off;"
+  dbx:
+    container_name: dbx
+    image: t8y2/dbx:$DBX_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    volumes:
+      - dbx_data:/app/data
 
 volumes:
   es_data: {}
@@ -577,3 +584,4 @@ volumes:
   rocketmq_dashboard_data: {}
   rustfs_data: {}
   rustfs_log: {}
+  dbx_data: {}
