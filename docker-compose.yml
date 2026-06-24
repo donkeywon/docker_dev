@@ -129,6 +129,8 @@ services:
       ELASTICSEARCH_HOSTS: http://localhost:9200
       NEWSFEED_ENABLED: "false"
       TELEMETRY_OPTIN: "false"
+      XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: "abcdefghijklmnopqrstuvwxyz123456"
+      XPACK_SECURITY_ENCRYPTIONKEY: "abcdefghijklmnopqrstuvwxyz123456"
     volumes:
       - kibana_data:/usr/share/kibana/data
   esvue:
@@ -549,6 +551,21 @@ services:
     hostname: $HOSTNAME
     volumes:
       - dbx_data:/app/data
+      - /:/host
+  vm:
+    container_name: vm
+    image: victoriametrics/victoria-metrics:$VICTORIA_METRICS_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    volumes:
+      - vm_data:/victoria-metrics-data
+  vmlog:
+    container_name: vmlog
+    image: victoriametrics/victoria-logs:$VICTORIA_LOGS_VERSION
+    network_mode: host
+    hostname: $HOSTNAME
+    volumes:
+      - vmlog_data:/victoria-logs-data
 
 volumes:
   es_data: {}
@@ -585,3 +602,5 @@ volumes:
   rustfs_data: {}
   rustfs_log: {}
   dbx_data: {}
+  vm_data: {}
+  vmlog_data: {}
