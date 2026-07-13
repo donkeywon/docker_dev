@@ -269,21 +269,6 @@ services:
     hostname: $HOSTNAME
     environment:
       MODE: standalone
-  influxdb:
-    container_name: influxdb
-    image: influxdb:$INFLUXDB_VERSION
-    network_mode: host
-    hostname: $HOSTNAME
-    volumes:
-      - influxdb_data:/var/lib/influxdb
-  busybox:
-    container_name: busybox
-    image: busybox:$BUSYBOX_VERSION
-    network_mode: host
-    hostname: $HOSTNAME
-    command:
-      - sleep
-      - infinity
   metersphere:
     container_name: metersphere
     image: metersphere/metersphere-ce-allinone:$METERSPHERE_VERSION
@@ -309,15 +294,6 @@ services:
       - ./conf/metersphere:/opt/metersphere/conf
       - metersphere_logs:/opt/metersphere/logs
       - ./conf/metersphere/start-all.sh:/shells/start-all.sh
-  tdengine:
-    container_name: tdengine
-    image: tdengine/tsdb:$TDENGINE_VERSION
-    network_mode: host
-    hostname: $HOSTNAME
-    volumes:
-      - tdengine_data:/var/lib/taos
-      - tdengine_log:/var/log/taos
-      - tdengine_core:/corefile
   ftp:
     container_name: ftp
     image: drakkan/sftpgo:$SFTPGO_VERSION
