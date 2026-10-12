@@ -241,59 +241,6 @@ services:
       KEY_PRIV: ""
     volumes:
       - rustdesk_data:/data
-  dubbo-admin:
-    container_name: dubbo-admin
-    image: apache/dubbo-admin:$DUBBO_ADMIN_VERSION
-    network_mode: host
-    hostname: $HOSTNAME
-    depends_on:
-      zk:
-        required: true
-        condition: service_started
-    environment:
-      admin.registry.address: zookeeper://localhost:2181
-      admin.config-center: zookeeper://localhost:2181
-      admin.metadata-report.address: zookeeper://localhost:2181
-  kafka-ui:
-    container_name: kafka-ui
-    image: kafbat/kafka-ui:$KAFKA_UI_VERSION
-    network_mode: host
-    hostname: $HOSTNAME
-    environment:
-      DYNAMIC_CONFIG_ENABLED: "true"
-      SERVER_PORT: 8081
-  nacos:
-    container_name: nacos
-    image: nacos/nacos-server:$NACOS_VERSION
-    network_mode: host
-    hostname: $HOSTNAME
-    environment:
-      MODE: standalone
-  metersphere:
-    container_name: metersphere
-    image: metersphere/metersphere-ce-allinone:$METERSPHERE_VERSION
-    network_mode: host
-    hostname: $HOSTNAME
-    environment:
-      PASSWORD: $PASSWORD
-    depends_on:
-      mariadb:
-        required: true
-        condition: service_started
-      redis:
-        required: true
-        condition: service_started
-      kafka:
-        required: true
-        condition: service_started
-      rustfs:
-        required: true
-        condition: service_started
-    volumes:
-      - metersphere_data:/opt/metersphere/data
-      - ./conf/metersphere:/opt/metersphere/conf
-      - metersphere_logs:/opt/metersphere/logs
-      - ./conf/metersphere/start-all.sh:/shells/start-all.sh
   ftp:
     container_name: ftp
     image: drakkan/sftpgo:$SFTPGO_VERSION
@@ -350,67 +297,6 @@ services:
     hostname: $HOSTNAME
     volumes:
       - nats_ui_data:/db
-  redpanda:
-    container_name: redpanda
-    image: redpandadata/redpanda:$REDPANDA_VERSION
-    network_mode: host
-    hostname: $HOSTNAME
-    command:
-      - redpanda
-      - start
-      - --kafka-addr internal://0.0.0.0:9192,external://0.0.0.0:19192
-      # Address the broker advertises to clients that connect to the Kafka API.
-      # Use the internal addresses to connect to the Redpanda brokers'
-      # from inside the same Docker network.
-      # Use the external addresses to connect to the Redpanda brokers'
-      # from outside the Docker network.
-      - --advertise-kafka-addr internal://localhost:9192,external://localhost:19192
-      - --pandaproxy-addr internal://0.0.0.0:8182,external://0.0.0.0:18182
-      # Address the broker advertises to clients that connect to the HTTP Proxy.
-      - --advertise-pandaproxy-addr internal://localhost:8182,external://localhost:18182
-      - --schema-registry-addr internal://0.0.0.0:8181,external://0.0.0.0:18181
-      # Redpanda brokers use the RPC API to communicate with each other internally.
-      - --rpc-addr localhost:33145
-      - --advertise-rpc-addr localhost:33145
-      # Mode dev-container uses well-known configuration properties for development in containers.
-      - --mode dev-container
-      # Tells Seastar (the framework Redpanda uses under the hood) to use 1 core on the system.
-      - --smp 1
-      - --default-log-level=info
-    volumes:
-      - redpanda_data:/var/lib/redpanda/data
-  redpanda-console:
-    container_name: redpanda-console
-    image: redpandadata/console:$REDPANDA_CONSOLE_VERSION
-    network_mode: host
-    hostname: $HOSTNAME
-    entrypoint: /bin/sh
-    command: -c 'echo "$$CONSOLE_CONFIG_FILE" > /tmp/config.yml; /app/console'
-    environment:
-      CONFIG_FILEPATH: /tmp/config.yml
-      CONSOLE_CONFIG_FILE: |
-        server:
-          listenPort: 8280
-        kafka:
-          brokers: ["localhost:9192"]
-        schemaRegistry:
-          enabled: true
-          urls: ["http://localhost:8181"]
-        redpanda:
-          adminApi:
-            enabled: true
-            urls: ["http://localhost:9644"]
-        analytics:
-          enabled: false
-    depends_on:
-      redpanda:
-        required: true
-        condition: service_started
-  pogocache:
-    container_name: pogocache
-    image: pogocache/pogocache:$POGOCACHE_VERSION
-    network_mode: host
-    hostname: $HOSTNAME
   rocketmq-namesrv:
     container_name: rmqnamesrv
     image: apache/rocketmq:$ROCKETMQ_VERSION
@@ -437,23 +323,6 @@ services:
     volumes:
       - rocketmq_data:/home/rocketmq/store
       - rocketmq_log:/home/rocketmq/logs/rocketmqlogs
-  rocketmq-dashboard:
-    container_name: rmqdashboard
-    image: apacherocketmq/rocketmq-dashboard:$ROCKETMQ_DASHBOARD_VERSION
-    network_mode: host
-    hostname: $HOSTNAME
-    depends_on:
-      - rocketmq-namesrv
-      - rocketmq
-    entrypoint:
-      - sh
-      - -c
-      - mkdir -p /tmp/rocketmq-console/data; echo "admin=$PASSWORD,1" > /tmp/rocketmq-console/data/users.properties; java $$JAVA_OPTS -jar /rocketmq-dashboard.jar
-    environment:
-      TZ: Asia/Shanghai
-      JAVA_OPTS: -Drocketmq.config.namesrvAddrs=127.0.0.1:9876 -Dserver.port=8190
-    volumes:
-      - rocketmq_dashboard_data:/tmp
   rustfs:
     container_name: rustfs
     image: rustfs/rustfs:$RUSTFS_VERSION
@@ -561,20 +430,12 @@ volumes:
   mariadb_log: {}
   kibana_data: {}
   torna_tmp: {}
-  influxdb_data: {}
-  metersphere_data: {}
-  metersphere_logs: {}
-  tdengine_data: {}
-  tdengine_log: {}
-  tdengine_core: {}
   sftpgo_data: {}
   sftpgo_home: {}
   nats_data: {}
   nats_ui_data: {}
-  redpanda_data: {}
   rocketmq_data: {}
   rocketmq_log: {}
-  rocketmq_dashboard_data: {}
   rustfs_data: {}
   rustfs_log: {}
   dbx_data: {}

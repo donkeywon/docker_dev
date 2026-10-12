@@ -7,6 +7,8 @@ innodb_log_file_size            = 1G      # [计算公式: innodb_buffer_pool_si
 innodb_io_capacity              = 10000   # [改值规则: 普通SSD设1000~2000; 单块NVMe设10000; 企业级设30000+]
 innodb_io_capacity_max          = 20000   # [计算公式: 通常设置为 innodb_io_capacity 的 2 倍]
 
+server_id=1
+
 port                            = 3307
 skip_name_resolve               = 1        # 禁用DNS反向解析，连接速度翻倍
 innodb_flush_method             = O_DIRECT # 绕过系统缓存直接读写盘，开启Linux Native AIO的关键
